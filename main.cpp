@@ -10,7 +10,7 @@
 #include "cuda_utils.h"
 
 // 2 ^ 19 iteration time
-#define MESSAGE_NUM 0x80000
+#define MESSAGE_NUM 0x800000
 
 int main() {
     // randomly generate MESSAGE_NUM states

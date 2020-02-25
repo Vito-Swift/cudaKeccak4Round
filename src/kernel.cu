@@ -834,7 +834,7 @@ init_keccak_kernel(uint32_t dev_id, uint32_t *states, uint32_t state_count, uint
     CUDA_CHECK(cudaDeviceReset());
 
     // print out gpu properties
-    check_gpu(&deviceProp);
+//    check_gpu(&deviceProp);
 
     // set thread number to be a multiply of a warp
     *total_thread_num = ((state_count % THREADS_PER_BLOCK) == 0) ?
@@ -875,8 +875,22 @@ launch_keccak_kernel(uint32_t dev_id, uint32_t *states, uint32_t state_count) {
     dim3 tpb(THREADS_PER_BLOCK);
     uint32_t block_num = total_thread_num / THREADS_PER_BLOCK;
 
+    // setup timers
+    cudaEvent_t start_clock, end_clock;
+    CUDA_CHECK(cudaEventCreate(&start_clock));
+    CUDA_CHECK(cudaEventCreate(&end_clock));
+
+    CUDA_CHECK(cudaEventRecord(start_clock, 0));
+
     kernel << < block_num, tpb >> > (kern_state_buffer, kern_output_buffer);
+
     CUDA_CHECK(cudaDeviceSynchronize());
+    CUDA_CHECK(cudaEventRecord(end_clock, 0));
+    CUDA_CHECK(cudaEventSynchronize(end_clock));
+
+    float exec_time_ms;
+    CUDA_CHECK(cudaEventElapsedTime(&exec_time_ms, start_clock, end_clock));
+    printf("*\nGPU time: %.3f ms\n*\n", exec_time_ms);
 
     finalize_keccak_kernel(kern_state_buffer, kern_output_buffer);
 }
